@@ -1,0 +1,5 @@
+1. git fetch recommender
+2. git merge recommender/master
+3. git add -A 
+4. git commit -m "update code"
+5. git push recommender
