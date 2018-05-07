@@ -33,13 +33,13 @@ then
 elif [ "$1" == "aiv" ]
 then
 	CUDA_VISIBLE_DEVICES="$8" python ./run.py \
-	-d ./data/aiv/preprocessed/aiv/cf/v8 \
-	-a ./data/aiv/preprocessed/aiv \
-	-o ./result/aiv/result/  \
+	-d ../data/aiv/preprocessed/aiv/cf/v8 \
+	-a ../data/aiv/preprocessed/aiv \
+	-o ../result/aiv/result/  \
 	-e 200 \
 	-l 300 \
 	-k $7 \
-	-p ./data/preprocessed/glove.6B.200d.txt \
+	-p ../data/preprocessed/glove.6B.200d.txt \
 	-u $3 \
 	-v $4 \
 	-P $5 \
