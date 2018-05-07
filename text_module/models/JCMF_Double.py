@@ -153,7 +153,9 @@ def JCMF_Double(res_dir, train_user, train_item, valid_user, test_user,
         loss = 0
         tic = time.time()
         print "%d iteration\t(patience: %d)" % (iteration, count)
-
+        print "=================================================================="
+        print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "=================================================================="
         t_YY = b * (YY.T.dot(YY)) + lambda_u * np.eye(dimension)
 
         sub_loss = np.zeros(num_user)

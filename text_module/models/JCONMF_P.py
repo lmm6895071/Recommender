@@ -157,7 +157,10 @@ def JCONMF_P(res_dir, train_user, train_item, valid_user, test_user,
         loss = 0
         tic = time.time()
         print "%d iteration\t(patience: %d)" % (iteration, count)
-
+        print "=================================================================="
+        print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
+        print "=================================================================="
         sub_loss = np.zeros(num_user)
         for i in xrange(num_user):
             idx_item = train_user[0][i]
@@ -293,7 +296,7 @@ def JCONMF_P(res_dir, train_user, train_item, valid_user, test_user,
             better_rmse=te_eval
         if te_mae < better_mae:
             better_mae = te_mae
-        print "\ JCONMF_P=============better_rmse:{}=====better_mae:{}==============\n".format(better_rmse,better_mae)
+        print "\n JCONMF_P=============better_rmse:{}=====better_mae:{}==============\n".format(better_rmse,better_mae)
         if (count == endure_count):
             break
         PREV_LOSS = loss

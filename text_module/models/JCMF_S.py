@@ -139,8 +139,8 @@ def JCMF_S(res_dir, train_user, train_item, valid_user, test_user,
         iidex=iidex+1
     S_Train_R_J=np.array(S_Train_R_J)
 
-    Q = np.random.uniform(0,0.5,size=(num_item,dimension))
-    P = np.random.uniform(0,0.5,size=(num_user,dimension))
+    Q = np.random.uniform(0.001,1,size=(num_item,dimension))
+    P = np.random.uniform(0.001,1,size=(num_user,dimension))
 
     cnn_module = CNN_module(dimension, vocab_size, dropout_rate,emb_dim, max_len, num_kernel_per_ws, init_W)
     theta = cnn_module.get_projection_layer(CNN_X)
@@ -156,7 +156,10 @@ def JCMF_S(res_dir, train_user, train_item, valid_user, test_user,
         loss = 0
         tic = time.time()
         print "%d iteration\t(patience: %d)" % (iteration, count)
-
+        print "=================================================================="
+        print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
+        print "=================================================================="
         VV = b * (V.T.dot(V)) + lambda_u * np.eye(dimension)
         SVV = b * (Q.T.dot(Q)) + lambda_q * np.eye(dimension)
 
@@ -166,26 +169,17 @@ def JCMF_S(res_dir, train_user, train_item, valid_user, test_user,
             idx_item = train_user[0][i]
             V_i = V[idx_item]
             R_i = Train_R_I[i]
-            A = VV + (a - b) * (V_i.T.dot(V_i))
+            A =(a - b) * (V_i.T.dot(V_i))+ lambda_u * np.eye(dimension)
             B = (a * V_i * (np.tile(R_i, (dimension, 1)).T)).sum(0)
 
-            U[i] = np.linalg.solve(A, B)
-
-            sub_loss[i] = -0.5 * lambda_u * np.dot(U[i], U[i])
-
-            '''
             Q_i = Q[idx_item]
             S_R_i = S_Train_R_I[i]
-            S_approx_R_i=P[i].dot(Q_i.T)
-            approx_R_i = U[i].dot(V_i.T)
-            # U[i]=U[i]+eta*(((V_i * (np.tile(-R_i+approx_R_i, (dimension, 1)).T)).sum(0) )+lambda_u*U[i])
-            SA = SVV + (a - b) * (Q_i.T.dot(Q_i))
-            SB = (a * Q_i * (np.tile(S_R_i, (dimension, 1)).T)).sum(0)
-            P[i] = np.linalg.solve(SA, SB)
-            # P[i]=P[i]+eta*(((Q_i * (np.tile(-S_R_i+S_approx_R_i, (dimension, 1)).T)).sum(0) )+lambda_p*P[i])      
-            # sub_loss[i] =sub_loss[i] -0.5 * lambda_u * np.dot(U[i], U[i])
-            sub_loss[i] =sub_loss[i]-0.5 * lambda_p * np.dot(P[i], P[i])
-            '''
+            A= A+Q_i.T.dot(Q_i)
+            B =B+ (Q_i*(np.tile(S_R_i,(dimension,1)).T)).sum(0)
+
+            U[i] =(np.linalg.solve(A.T, B.T)).T      #AX=B,X=A^(-1)B
+            sub_loss[i] =sub_loss[i] -0.5 * lambda_u * np.dot(U[i], U[i])
+            
         P=U
 
         loss = loss + np.sum(sub_loss)
@@ -202,7 +196,7 @@ def JCMF_S(res_dir, train_user, train_item, valid_user, test_user,
             A = tmp_A + lambda_v * item_weight[j] * np.eye(dimension)
             B = (a * U_j * (np.tile(R_j, (dimension, 1)).T)
                  ).sum(0) + lambda_v * item_weight[j] * theta[j]
-            V[j] = np.linalg.solve(A, B)
+            V[j] = (np.linalg.solve(A.T, B.T)).T
 
 
             sub_loss[j] = -0.5 * lambda_v * np.dot(V[j], V[j])
@@ -218,18 +212,12 @@ def JCMF_S(res_dir, train_user, train_item, valid_user, test_user,
             S_R_j = S_Train_R_J[j]
             P_j = P[idx_user]
 
-            SA = SUU + (a - b) * (P_j.T.dot(P_j))
+            SA =  (a - b) * (P_j.T.dot(P_j)) + + lambda_q * np.eye(dimension)
             SB = (a * P_j * (np.tile(S_R_j, (dimension, 1)).T)).sum(0)
-
-            S_approx_R_j = P_j.dot(Q[j].T)
-
-
-            tmp_A = SUU + (a - b) * (P_j.T.dot(P_j))
-            # A = tmp_A + lambda_q * item_weight[j] * np.eye(dimension)
-            # B = (a * P_j * (np.tile(S_R_j, (dimension, 1)).T)).sum(0)  
-            Q[j] = np.linalg.solve(SA, SB)
+            Q[j] = (np.linalg.solve(SA.T, SB.T)).T
 
             #SGD 
+            # S_approx_R_j = P_j.dot(Q[j].T)
             # Q[j]=Q[j]+eta*((P_j * (np.tile(-S_R_j+S_approx_R_j, (dimension, 1)).T)).sum(0)+lambda_q*Q[j])
             
             sub_loss[j] =sub_loss[j] -0.5 * lambda_q * np.dot(Q[j], Q[j])
