@@ -21,7 +21,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     epsilon = 1e-20
     num_user = R.shape[0]
     num_item = R.shape[1]
-    print "===================================ConvMF Models==================================="
+    print "=================================== Models==================================="
     print "\tnum_user is:{}".format(num_user)
     print "\tnum_item is:{}".format(num_item)
     print "==================================================================================="
@@ -152,6 +152,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         sub_loss = np.zeros(num_user)
         print "=================================================================="
         print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
         print "=================================================================="
         # if momentum_flag==1 and  iteration <iteration_flag:
         #     print "momentum update",momentum_eta

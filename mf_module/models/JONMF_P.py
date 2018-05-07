@@ -144,6 +144,7 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
         sub_loss = np.zeros(num_user)
         print "=================================================================="
         print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
         print "=================================================================="
         for i in xrange(num_user):
             idx_item = train_user[0][i]
