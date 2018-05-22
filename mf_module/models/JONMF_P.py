@@ -122,13 +122,13 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
 
 
     stddv=1#1.0/np.sqrt(10)
-    V = np.random.uniform(0,stddv,size=(num_item,dimension))
-    U = np.random.uniform(0,stddv,size=(num_user, dimension))
+    V = np.random.uniform(0.01,stddv,size=(num_item,dimension))
+    U = np.random.uniform(0.01,stddv,size=(num_user, dimension))
 
-    Q = np.random.uniform(0,stddv, size=(num_item,dimension))
-    P = np.random.uniform(0,stddv,size=(num_user,dimension))
-    M = np.random.uniform(0,stddv, size=(num_user,dimension))
-    Gama=np.random.uniform(0,stddv, size=(dimension,dimension))
+    Q = np.random.uniform(0.01,stddv, size=(num_item,dimension))
+    P = np.random.uniform(0.01,stddv,size=(num_user,dimension))
+    M = np.random.uniform(0.01,stddv, size=(num_user,dimension))
+    Gama=np.random.uniform(0.01,stddv, size=(dimension,dimension))
 
     endure_count = 100
     count = 0

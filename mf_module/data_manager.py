@@ -26,7 +26,7 @@ class Data_Factory():
         R = pickl.load(open(path + "/ratings.all", "rb"))
         print "Load preprocessed rating data - %s" % (path + "/ratings.all")
         return R
-    def save(self, path):
+    def save(self, path,R):
         if not os.path.exists(path):
             os.makedirs(path)
         print "Saving preprocessed rating data - %s" % (path + "/ratings.all")

@@ -125,6 +125,7 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
         sub_loss = np.zeros(num_user)
         print "=================================================================="
         print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
         print "=================================================================="
         for i in xrange(num_user):
             idx_item = train_user[0][i]
@@ -156,9 +157,6 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
 
             sub_loss[i] = -0.5 * lambda_u * np.dot(U[i], U[i])
         loss = loss + np.sum(sub_loss)
-        print "=================================================================="
-        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
-        print "=================================================================="
         sub_loss = np.zeros(num_item)
         UU = b * (U.T.dot(U))
         for j in xrange(num_item):
@@ -178,10 +176,10 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
             '''
             # approx_R_j = U_j.dot(V[j].T)
             # g=(U_j * (np.tile(-R_j+approx_R_j, (dimension, 1)).T)).sum(0)+lambda_v*V[j]
-            # V[j]=V[j]-div
-
-            # # V[j]=V[j]+eta*g
+            # V[j]=V[j]+eta*g
+            
             # # momentum_V_Item[j],sqrs_Item[j],div=adam(g,momentum_V_Item[j],sqrs_Item[j],-eta,iteration)
+            # #V[j]=V[j]-div
 
             sub_loss[j] = -0.5 * lambda_v * np.dot(V[j], V[j])
             sub_loss[j] = sub_loss[j]-0.5 * np.square(R_j * a).sum()
@@ -229,7 +227,7 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
 
         if (count == endure_count):
             break
-        if better_rmse + 0.02 <te_eval:
+        if better_rmse + 2 <te_eval:
             break
 
         PREV_LOSS = loss

@@ -95,8 +95,8 @@ def WNMF(train_user, train_item, valid_user, test_user,R,max_iter=50, dimension=
 
 
     pre_val_eval = 1e10
-    V = np.random.uniform(0.001,1,size=(num_item,dimension))
-    U = np.random.uniform(0.001,1,size=(num_user, dimension))
+    V = np.random.uniform(0.001,0.5,size=(num_item,dimension))
+    U = np.random.uniform(0.001,0.5,size=(num_user, dimension))
 
     print V[0,1:3]
     print U[0,1:3]

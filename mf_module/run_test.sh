@@ -2,7 +2,7 @@
 if [ "$1" == "ml-1m" ]
 then
 	python ./run.py \
-	-d ../data/movielens/preprocessed/movielens_1m/cf/v8/ \
+	-d ../data/movielens/preprocessed/movielens_1m/cf/v$8/ \
 	-a ../data/movielens/preprocessed/movielens_1m/ \
 	-k $7 \
 	-u $3 \

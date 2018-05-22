@@ -69,10 +69,10 @@ if do_preprocess:
     print "\trating data path - %s" % path_rating
     print "\tmin_rating: %d\n\t split_ratio: %.1f"% (min_rating, split_ratio)
     print "==========================================================================================="
-    
+
 
     R =data_factory.preprocess(path_rating, min_rating)
-    data_factory.save(aux_path, R)
+    data_factory.save(aux_path,R)
     data_factory.generate_train_valid_test_file_from_R(data_path, R, split_ratio)
 else:
     methods = args.flag
@@ -107,15 +107,15 @@ else:
 
     if methods=="PMF":
         from models.PMF import PMF
-        PMF(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, 
+        PMF(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension,
             train_user=train_user, train_item=train_item, valid_user=valid_user, test_user=test_user, R=R)
     elif methods == "BiasMF":
         from models.BiasMF import BiasMF
-        BiasMF(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, 
+        BiasMF(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension,
             train_user=train_user, train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,momentum_flag=momentum_flag)
     elif methods == "BiasMF_Constant":
         from models.BiasMF_Constant import BiasMF_Constant
-        BiasMF_Constant(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, 
+        BiasMF_Constant(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension,
             train_user=train_user, train_item=train_item, valid_user=valid_user, test_user=test_user, R=R)
     elif methods == "WNMF":
         from models.WNMF import WNMF
@@ -124,7 +124,7 @@ else:
     elif methods == "JMF-S":
         from models.JMF_S import JMF_S
         print "######### Test start lambda_u={},lambda_v={},lambda_p=-,lambda_q={}############".format(lambda_u,lambda_v,lambda_q)
-        JMF_S(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user, 
+        JMF_S(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user,
             train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q,momentum_flag=momentum_flag)
 
     elif methods == "JONMF-P":
@@ -134,8 +134,8 @@ else:
                 train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q)
     elif methods =="JMF-Double":
         from models.JMF_Double import JMF_Double
-        JMF_Double(max_iter=max_iter,lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user, 
-               train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q)        
+        JMF_Double(max_iter=max_iter,lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user,
+               train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q)
     print "###### method {} end lambda_u={},lambda_v={},lambda_p={},lambda_q={} ########".format(methods,lambda_u,lambda_v,lambda_p,lambda_q)
 
-   
+

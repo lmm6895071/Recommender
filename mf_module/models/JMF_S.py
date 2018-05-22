@@ -16,7 +16,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     # explicit setting
     a = 1
     b = 0
-    eta=-0.03#-0.0002
+    eta=-0.0005
     beta=0.02
     epsilon = 1e-20
     num_user = R.shape[0]
@@ -121,9 +121,9 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     S_Train_R_J=np.array(S_Train_R_J)
 
     pre_val_eval = 1e10
-    V = np.random.uniform(0,0.5,size=(num_item,dimension))
-    U = np.random.uniform(0,0.5,size=(num_user, dimension))
-    Q = np.random.uniform(0,0.5,size=(num_item,dimension))
+    V = np.random.uniform(0.1,1,size=(num_item,dimension))
+    U = np.random.uniform(0.1,1,size=(num_user, dimension))
+    Q = np.random.uniform(0.1,1,size=(num_item,dimension))
     P = U#np.random.uniform(0,0.5,size=(num_user,dimension))
 
     '''
@@ -137,9 +137,10 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     momentum_V_Q=np.zeros([num_item,dimension])
 
     momentum_eta=-0.005
-    sgd_eta=-0.0005
     iteration_flag=lambda_p
     '''
+    sgd_eta=-0.0005
+
     endure_count = 100
     count = 0
     better_rmse = 100
@@ -185,9 +186,9 @@ def JMF_S(train_user, train_item, valid_user, test_user,
             B = (a * V_i * (np.tile(R_i, (dimension, 1)).T)).sum(0) 
             B =B+ (Q_i*(np.tile(S_R_i,(dimension,1)).T)).sum(0)
 
+
             '''
             # sgd method
-            # U[i]=U[i]+eta*g
             # P[i]=P[i]+eta*(((Q_i * (np.tile(-S_R_i+S_approx_R_i, (dimension, 1)).T)).sum(0) )+lambda_p*P[i])
             if momentum_flag ==1:
                 if iteration<iteration_flag:
@@ -201,6 +202,8 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     U[i]=U[i]+sgd_eta*g
             else:
             '''
+            # U[i]=U[i]+eta*g
+
             U[i] =(np.linalg.solve(A.T, B.T)).T      #AX=B,X=A^(-1)B
             sub_loss[i] =sub_loss[i] -0.5 * lambda_u * np.dot(U[i], U[i])
 
@@ -225,7 +228,6 @@ def JMF_S(train_user, train_item, valid_user, test_user,
             g=(U_j * (np.tile(-R_j+approx_R_j, (dimension, 1)).T)).sum(0)+lambda_v*V[j]
 
             '''
-            # V[j]=V[j]+eta*g
             # V[j]=V[j]-div
             if momentum_flag==1:
                 if iteration <iteration_flag:
@@ -239,6 +241,8 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     V[j]=V[j]+ sgd_eta*g
             else:
             '''
+            # V[j]=V[j]+eta*g
+
             V[j] = (np.linalg.solve((A+lambda_v * np.eye(dimension)).T, B.T)).T #A*X=B  X =A^-1*B
 
             sub_loss[j] = -0.5 * lambda_v * np.dot(V[j], V[j])
@@ -270,6 +274,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     Q[j]=Q[j]+sgd_eta*(gq)
             else:
             '''
+            # Q[j]=Q[j]+eta*(gq)
             Q[j] = (np.linalg.solve((SA+lambda_q * np.eye(dimension)).T, SB.T)).T #A*X=B  X =A^-1*B
 
             sub_loss[j] =sub_loss[j] -0.5 * lambda_q * np.dot(Q[j], Q[j])
