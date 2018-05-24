@@ -1,8 +1,8 @@
 
 if [ "$1" == "ml-1m" ]
 then
-	CUDA_VISIBLE_DEVICES="$8"  python ./run.py \
-	-d ../data/movielens/preprocessed/movielens_1m/cf/v8/ \
+	CUDA_VISIBLE_DEVICES="$9"  python ./run.py \
+	-d ../data/movielens/preprocessed/movielens_1m/cf/v$8/ \
 	-a ../data/movielens/preprocessed/movielens_1m/ \
 	-o ../result/movielens_1m/result/1_100_200 \
 	-e 200 \
