@@ -1,21 +1,20 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 '''
-Created on Feb 5, 2018
+Created on Nay 29, 2018
 
 @author: ming
 '''
 
-import os
+import os,sys
 import time
 import logging
-from util import eval_RMSE_bias_list,adam
+from util import eval_RMSE_bais_list,adam
 import math
 import numpy as np
 
-def JMF_S(train_user, train_item, valid_user, test_user,
+def JMF_SU(train_user, train_item, valid_user, test_user,
            R, max_iter=50, lambda_u=1, lambda_v=100, dimension=50, lambda_p=0, lambda_q=50,momentum_flag=1):
     # explicit setting
+    momentum_flag=1#1:CD 0:SGD
     a = 1
     b = 0
     eta=-0.0005
@@ -48,24 +47,18 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     valid_size=0
     total_sum=0
 
-    user_bias_sum=[]
-    item_bias_sum=[]
-    user_bias_size=[]
-    item_bias_size=[]
+    user_bais_sum=[]
+    item_bais_sum=[]
+    user_bais_size=[]
+    item_bais_size=[]
 
-    user_bias_dict=[]
 
-    num_c=0
     for item in train_user[1]:
         train_sum=train_sum+ np.sum(item)
         train_size=train_size+np.size(item)
 
-        user_bias_sum.append(np.sum(item))
-        user_bias_size.append(len(item))
-        item =item.tolist()
-        i_index=[len(item)/4,len(item)/2,len(item)/4+len(item)/2]
-        u_bias_list=[min(item),item[len(item)/4],item[len(item)/2],item[(int)(len(item)*0.75)],max(item)]
-        user_bias_dict.append(u_bias_list)
+        user_bais_sum.append(np.sum(item))
+        user_bais_size.append(len(item))
 
 
     for item in test_user[1]:
@@ -76,26 +69,23 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         valid_size=valid_size+np.size(item)
     
     for item in train_item[1]:
-        item_bias_sum.append(np.sum(item))
-        item_bias_size.append(len(item))
+        item_bais_sum.append(np.sum(item))
+        item_bais_size.append(len(item))
 
 
     total_size=train_size+test_size+valid_size
     total_sum=train_sum+test_sum+valid_sum
     global_average=total_sum*1.0/total_size
 
-    user_bias=[user_bias_sum[i]/user_bias_size[i] for i in range(len(user_bias_sum))]
-    item_bias=[item_bias_sum[i]/item_bias_size[i] for i in range(len(item_bias_sum))]
-
-
+    user_bais=[user_bais_sum[i]/user_bais_size[i] for i in range(len(user_bais_sum))]
+    item_bais=[item_bais_sum[i]/item_bais_size[i] for i in range(len(item_bais_sum))]
 
     print "######################################"
     print "sum: ",train_sum,test_sum,valid_sum   
     print "size: ",train_size,test_size,valid_size
     print "average: ",train_sum*1.0/train_size, test_sum*1.0/test_size, valid_sum*1.0/valid_size
     print "global average: ",global_average
-    print "user_bias:",user_bias[0:10]
-    print "five point",user_bias_dict[0:10]
+    print "user_bais:",user_bais[0:10]
     print "######################################"
     
     '''
@@ -109,17 +99,9 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     uindx=0
     for item in train_user[1]:
         new_item=item.copy()
-        inf=user_bias[uindx]# user_bias_dict[uindx][1]
-        sup=user_bias[uindx]-0.1# user_bias_dict[uindx][4]
-        a= sup-inf+1
-
         for i in range(len(item)):
-            # if item[i] >user_bias[uindx] :      
-            if item[i] >sup:
-                new_item[i]=1.0     
-            elif item[i] >inf :
-                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
-                #1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[iidex]))
+            if item[i] >user_bais[uindx]:
+                new_item[i]=1.0/(1.0+(item[i]-user_bais[uindx])**(-1))#1.0/(1.0+math.exp(-item[i]+user_bais[iidex]))
             else:
                 new_item[i]=0
         S_Train_R_I.append(new_item)
@@ -130,21 +112,16 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     for item in train_item[1]:
         new_item=item.copy()
         for i in range(len(item)):
-            temp_bias=train_item[0][uindx][i]
-            
-            inf= user_bias[uindx]#user_bias_dict[temp_bias][1]
-            sup= user_bias[uindx]-0.1#user_bias_dict[temp_bias][4]
-            a=sup-inf+1
-            if item[i] > sup:
-                new_item[i]=1.0
-            elif item[i] >inf: #user_bias_dict[temp_bias][0] :#user_bias[temp_bias] :
-                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
-                # new_item[i]= 1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[temp_bias]))
+            temp_bais=train_item[0][uindx][i]
+            if item[i] >user_bais[temp_bais]:
+                new_item[i]= 1.0/(1.0+(item[i]-user_bais[temp_bais])**(-1))#1.0/(1.0+math.exp(-item[i]+user_bais[temp_bais]))
             else:
                 new_item[i]=0
         S_Train_R_J.append(new_item)
         uindx=uindx+1
     S_Train_R_J=np.array(S_Train_R_J)
+ 
+    print S_Train_R_I[1]
 
     pre_val_eval = 1e10
     V = np.random.uniform(0.1,1,size=(num_item,dimension))
@@ -193,6 +170,8 @@ def JMF_S(train_user, train_item, valid_user, test_user,
             idx_item = train_user[0][i]
             #train_user[0]=[[item1,item2,item3...],[item1,itme3],[item3,item2]...]
             #train_user[1]=[[rating1,rating2,rating3...],[rating1,rating3],[rating2,rating5]...]
+            #train_item[0]=[[user1,user2,user3...],[user1,user3],[user2,user5]...]
+            #train_item[1]=[[rating1,rating2,rating3...],[rating1,rating3],[rating2,rating5]...]
             V_i = V[idx_item]
             R_i = Train_R_I[i]#[rating1,rating2,rating3...]
             
@@ -227,14 +206,95 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     U[i]=U[i]+sgd_eta*g
             else:
             '''
-            # U[i]=U[i]+eta*g
 
-            U[i] =(np.linalg.solve(A.T, B.T)).T      #AX=B,X=A^(-1)B
+            if momentum_flag ==0:
+                U[i]=U[i]+eta*g
+            elif momentum_flag==1:
+                U[i] =(np.linalg.solve(A.T, B.T)).T      #AX=B,X=A^(-1)B
             sub_loss[i] =sub_loss[i] -0.5 * lambda_u * np.dot(U[i], U[i])
+
+
+
+
+            '''update S
+            '''
+            if momentum_flag ==0:
+
+                Xg = (S_R_i - S_approx_R_i) 
+                p= R_i.copy()
+                C=1
+                for rj in range(len(R_i)):
+                    p[rj] = -(2+C)*((R_i[rj] -user_bais[i])**(-2))/((1.0+(R_i[rj] -user_bais[i])**(-1))**2+1e-10)
+                Xg = (Xg*p).sum()
+                user_bais[i]= user_bais[i]+ eta*Xg
+
+                for jj in range(len(R_i)):
+
+                    if R_i[jj]<=user_bais[i]:
+                        S_Train_R_I[i][jj] = 0
+                    else:
+                        S_Train_R_I[i][jj] = 1.0/(1.0+(R_i[jj]-user_bais[i])**(-1))
+  
+            
+            elif momentum_flag==1:
+                idx =0
+                C=5
+                for item in S_R_i:
+                    if item <=1:
+                        S_R_i[idx] = S_approx_R_i[idx]
+                    else:
+                        S_R_i[idx] = S_approx_R_i[idx]-0.5*C
+                    idx = idx+1
+                # S_R_i   =  S_approx_R_i.copy()
+
+            # sub_loss[i] =sub_loss[i] -0.5  * np.dot(S_R_i, S_R_i)
+
+                X = (1.0/(S_R_i+1e-20)-1)**2
+                for jj in range(len(X)):
+                    if  S_Train_R_I[i][jj]<=0:
+                        S_Train_R_I[i][jj] = 0
+                    else:
+                        S_Train_R_I[i][jj] = S_R_i[jj]
+        uindx=0
+        nS_Train_R_J = []#train_item[1]
+        #train_user[0]=[[item1,item2,item3...],[item1,itme3],[item3,item2]...]
+        #train_user[1]=[[rating1,rating2,rating3...],[rating1,rating3],[rating2,rating5]...]
+        #train_item[0]=[[user1,user2,user3...],[user1,user3],[user2,user5]...]
+        #train_item[1]=[[rating1,rating2,rating3...],[rating1,rating3],[rating2,rating5]...]
+        for item in S_Train_R_J:
+            new_item=item.copy()
+            for i in range(len(item)):
+                user_id=train_item[0][uindx][i]
+                item_idx = 0
+                for  j in train_user[0][user_id]:
+                    if  j == uindx:
+                        break
+                    item_idx= item_idx+1
+                try:
+                    new_item[i]= S_Train_R_I[user_id][item_idx]
+                except Exception as err:
+                    print item_idx,i
+                    print train_user[0][user_id]
+                    print S_Train_R_I[user_id]
+                    print err
+                    sys.exit()
+
+            nS_Train_R_J.append(new_item)
+            uindx=uindx+1
+        S_Train_R_J=np.array(nS_Train_R_J)
+
+        # print S_Train_R_J[1]
+        print S_Train_R_I[1]
+        if momentum_flag==0:
+            print "SGD"
+        else:
+            print "CD"
+
 
         P=U
 
-        loss = loss + np.sum(sub_loss)
+        loss = loss + np.sum(sub_loss) 
+
         print "=================================================================="
         print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
         print "=================================================================="
@@ -266,9 +326,10 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     V[j]=V[j]+ sgd_eta*g
             else:
             '''
-            # V[j]=V[j]+eta*g
-
-            V[j] = (np.linalg.solve((A+lambda_v * np.eye(dimension)).T, B.T)).T #A*X=B  X =A^-1*B
+            if momentum_flag ==0:
+                V[j]=V[j]+eta*g
+            elif momentum_flag==1:
+                V[j] = (np.linalg.solve((A+lambda_v * np.eye(dimension)).T, B.T)).T #A*X=B  X =A^-1*B
 
             sub_loss[j] = -0.5 * lambda_v * np.dot(V[j], V[j])
             sub_loss[j] = sub_loss[j]-0.5 * np.square(R_j * a).sum()
@@ -299,8 +360,10 @@ def JMF_S(train_user, train_item, valid_user, test_user,
                     Q[j]=Q[j]+sgd_eta*(gq)
             else:
             '''
-            # Q[j]=Q[j]+eta*(gq)
-            Q[j] = (np.linalg.solve((SA+lambda_q * np.eye(dimension)).T, SB.T)).T #A*X=B  X =A^-1*B
+            if momentum_flag == 0:
+                Q[j]=Q[j]+eta*(gq)
+            elif momentum_flag==1:
+                Q[j] = (np.linalg.solve((SA+lambda_q * np.eye(dimension)).T, SB.T)).T #A*X=B  X =A^-1*B
 
             sub_loss[j] =sub_loss[j] -0.5 * lambda_q * np.dot(Q[j], Q[j])
             sub_loss[j] = sub_loss[j]-0.5 * np.square(S_R_j * a).sum()
@@ -311,13 +374,12 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         loss = (loss + np.sum(sub_loss))
         seed = np.random.randint(100000)
         topk=[3,5,10,15,20,25,30,40,50,100]
-        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_list(train_user[1], U, V, train_user[0],topk,user_bias)
-        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
-        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_list(test_user[1], U, V, test_user[0],topk,user_bias)
+        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(train_user[1], U, V, train_user[0],topk,user_bais)
+        val_eval,va_recall,va_mae = eval_RMSE_bais_list(valid_user[1], U, V, valid_user[0],topk,user_bais)
+        te_eval,te_recall,te_mae = eval_RMSE_bais_list(test_user[1], U, V, test_user[0],topk,user_bais)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
-        
-        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
+
         toc = time.time()
         elapsed = toc - tic
         converge = abs((loss - PREV_LOSS) / PREV_LOSS)
@@ -335,7 +397,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
             better_rmse=te_eval
         if te_mae < better_mae:
             better_mae = te_mae
-        print "\n JMF_S========better_rmse:{}   better_mae:{}==========\n".format(better_rmse,better_mae)
+        print "\n JMF_SU========better_rmse:{}   better_mae:{}==========\n".format(better_rmse,better_mae)
 
         if (count == endure_count):
             break

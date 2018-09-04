@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on Sep 21, 2017
 
@@ -11,7 +13,7 @@ from time import time
 
 
 
-def eval_RMSE_bais(R,U,V,TS,k=50,heldout=4):
+def eval_RMSE_bias(R,U,V,TS,k=50,heldout=4):
     num_user = U.shape[0]
     sub_rmse = np.zeros(num_user)
     sub_recall=np.zeros(num_user)
@@ -33,12 +35,14 @@ def eval_RMSE_bais(R,U,V,TS,k=50,heldout=4):
 
 
     return rmse,m_recall
-def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
+def eval_RMSE_bias_list(R,U,V,TS,k=[50],user_bias=[]):
     num_user = U.shape[0]
     sub_rmse = np.zeros(num_user)
     sub_recall=np.zeros(num_user)
     sub_mae = np.zeros(num_user)
     TS_count = 0
+
+    ndcg=np.zeros([3,num_user])
 
     recall_result=np.zeros([len(k),num_user])
 
@@ -52,6 +56,11 @@ def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
         R_i = R[i]
         sub_rmse[i] = np.square(result - R_i).sum()
         sub_mae[i]  = np.abs(result-R_i).sum()
+        
+        ndcg[0][i]= ndcg_score(R_i,result,5)
+        ndcg[1][i]=ndcg_score(R_i,result,10)
+        ndcg[2][i]=ndcg_score(R_i,result,20)
+
         for it in range(len(k)):
             # recall_result[it][i]=sub_recall[i]
             # sub_recall[i]
@@ -66,13 +75,13 @@ def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
     m_recall=[]#sub_recall.sum()/num_user
     for item in range(len(k)):
         m_recall.append(recall_result[item].sum()/num_user)
-    return rmse,m_recall,mae
+    return rmse,m_recall,mae,ndcg.mean(1)
 
 
 '''
 considering the bias of user,item; U_bias and Item_bias is contant
 '''
-def eval_RMSE_bais_list_alter(R,U,V,TS,k=[50],user_bias=[],item_bias=[],average=0):
+def eval_RMSE_bias_list_alter(R,U,V,TS,k=[50],user_bias=[],item_bias=[],average=0):
     num_user = U.shape[0]
     sub_rmse = np.zeros(num_user)
     sub_recall=np.zeros(num_user)
@@ -132,6 +141,7 @@ def eval_RMSE_bias_alpha_beta(R,U,V,TS,k=[50],alptha=[],beta=[],user_bias=[]):
     sub_recall=np.zeros(num_user)
     TS_count = 0
     sub_mae = np.zeros(num_user)
+    ndcg =np.zeros([3,num_user])
 
     recall_result=np.zeros([len(k),num_user])
 
@@ -154,6 +164,9 @@ def eval_RMSE_bias_alpha_beta(R,U,V,TS,k=[50],alptha=[],beta=[],user_bias=[]):
 
         sub_rmse[i] = np.square(result - R_i).sum()
         sub_mae[i]  = np.abs(result-R_i).sum()
+        ndcg[0][i]= ndcg_score(R_i,result,5)
+        ndcg[1][i]=ndcg_score(R_i,result,10)
+        ndcg[2][i]=ndcg_score(R_i,result,20)
         for it in range(len(k)):
             # recall_result[it][i]=sub_recall[i]
             # sub_recall[i]
@@ -162,13 +175,15 @@ def eval_RMSE_bias_alpha_beta(R,U,V,TS,k=[50],alptha=[],beta=[],user_bias=[]):
             recall_result[it][i]=sub_recall[i]=recall_top_k(num_user,R_i,result,k[it],heldout)
 
 
+
     rmse = np.sqrt(sub_rmse.sum() / TS_count)
     mae = sub_mae.sum()/TS_count
     m_recall=[]#sub_recall.sum()/num_user
     for item in range(len(k)):
         m_recall.append(recall_result[item].sum()/num_user)
 
-    return rmse,m_recall,mae
+    return rmse,m_recall,mae,ndcg.mean(1)
+
 
 
 
@@ -289,6 +304,68 @@ def adam(g, v, sqr, lr, t):
     sqr_bias_corr = sqr / (1. - beta2 ** (t+1))
     div = lr * v_bias_corr / (np.sqrt(sqr_bias_corr) + eps_stable)
     return (v,sqr,div)
+def dcg_score(y_true, y_score, k=10, gains="exponential"):
+    """Discounted cumulative gain (DCG) at rank k
+
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+
+    k : int
+        Rank.
+
+    gains : str
+        Whether gains should be "exponential" (default) or "linear".
+
+    Returns
+    -------
+    DCG @k : float
+    """
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+
+    if gains == "exponential":
+        gains = 2 ** y_true - 1
+    elif gains == "linear":
+        gains = y_true
+    else:
+        raise ValueError("Invalid gains option.")
+
+    # highest rank is 1 so +2 instead of +1
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gains / discounts)
+
+
+def ndcg_score(y_true, y_score, k=10, gains="exponential"):
+    """Normalized discounted cumulative gain (NDCG) at rank k
+
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+
+    k : int
+        Rank.
+
+    gains : str
+        Whether gains should be "exponential" (default) or "linear".
+
+    Returns
+    -------
+    NDCG @k : float
+    """
+    best = dcg_score(y_true, y_true, k, gains)
+    actual = dcg_score(y_true, y_score, k, gains)
+    return actual / best
+
+
 
 if __name__ == '__main__':
     r=[3,2,4,5,3]
@@ -301,3 +378,6 @@ if __name__ == '__main__':
 
     a,b= recall_top(3,u,r,p,[1,2,3],3)
     print a,b
+
+
+    ndcg_score()

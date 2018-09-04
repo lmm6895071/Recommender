@@ -352,16 +352,23 @@ if __name__ == '__main__':
     dt=[3,3,2,4,5]
     R=csr_matrix((dt,(u,v)))
 
-    # print R[0],R[1]
+    print R[0]
+    print "aa", R[1]
+    S=csr_matrix((dt,(v,u)))
+    print R, S
+
+    print R[1]
+    print S[1]
+
     # print R.shape
     # print R.tolil()
     # print R[0].nonzero()
-    train = []
-    for i in xrange(R.shape[0]):            #R.shape[0]  the number of rows(also the number of users)
-        user_rating = R[i].nonzero()[1]     #R[i].nonzero() is a list [user_idex,item_index];eg: [[0,0],[0,4]]
-        np.random.shuffle(user_rating)      #user_rating is the i-th user click item's list
-        train.append((i, user_rating[0]))   #tuple (i-th user_index,item_index); every user have a item;
-    print train
-    remain_item = set(xrange(R.shape[1])) - set(zip(*train)[1])# zip(*train)[1] unzip train
-    print zip(*train),";",zip(*train)[1]
-    print remain_item
+    # train = []
+    # for i in xrange(R.shape[0]):            #R.shape[0]  the number of rows(also the number of users)
+    #     user_rating = R[i].nonzero()[1]     #R[i].nonzero() is a list [user_idex,item_index];eg: [[0,0],[0,4]]
+    #     np.random.shuffle(user_rating)      #user_rating is the i-th user click item's list
+    #     train.append((i, user_rating[0]))   #tuple (i-th user_index,item_index); every user have a item;
+    # print train
+    # remain_item = set(xrange(R.shape[1])) - set(zip(*train)[1])# zip(*train)[1] unzip train
+    # print zip(*train),";",zip(*train)[1]
+    # print remain_item

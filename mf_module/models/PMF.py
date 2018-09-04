@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on Sep 8, 2017
 
@@ -7,9 +9,10 @@ Created on Sep 8, 2017
 import os,sys
 import time
 import logging
-from util import eval_RMSE_bais_list,adam
+from util import eval_RMSE_bias_list,adam
 import math
 import numpy as np
+import pickle
 
 def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, lambda_v=100, dimension=50):
     # explicit setting
@@ -102,9 +105,9 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
 
     print V[0,1:3]
     print U[0,1:3]
-    endure_count = 100
+    endure_count = 50
     count = 0
-    
+
 
     '''
     momentum method
@@ -137,7 +140,7 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
 
             A = VV + (a - b) * (V_i.T.dot(V_i))
             B = (a * V_i * (np.tile(R_i, (dimension, 1)).T)).sum(0) #np.tile() array copy; sum(0) is the sum of each column,sum(1) is the sum of each row;
-            
+
             '''
             CD method
             '''
@@ -148,7 +151,7 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
             SGD method or momentum method
             '''
             # approx_R_i = U[i].dot(V_i.T)
-            # g=((V_i * (np.tile(-R_i+approx_R_i, (dimension, 1)).T)).sum(0) )+lambda_u*U[i]            
+            # g=((V_i * (np.tile(-R_i+approx_R_i, (dimension, 1)).T)).sum(0) )+lambda_u*U[i]
             # U[i]=U[i]+eta*g
 
             # # momentum_V_User[i],sqrs_User[i],div=adam(g,momentum_V_User[i],sqrs_User[i],-eta,iteration)
@@ -177,7 +180,7 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
             # approx_R_j = U_j.dot(V[j].T)
             # g=(U_j * (np.tile(-R_j+approx_R_j, (dimension, 1)).T)).sum(0)+lambda_v*V[j]
             # V[j]=V[j]+eta*g
-            
+
             # # momentum_V_Item[j],sqrs_Item[j],div=adam(g,momentum_V_Item[j],sqrs_Item[j],-eta,iteration)
             # #V[j]=V[j]-div
 
@@ -191,14 +194,14 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
 
 
         topk=[3,5,10,15,20,25,30,40,50,100]
-        # holdout=4
-
-        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(Train_R_I, U, V, train_user[0],topk,user_bias)
-        val_eval,va_recall,va_mae = eval_RMSE_bais_list(Valid_R, U, V, valid_user[0],topk,user_bias)
-        te_eval,te_recall,te_mae = eval_RMSE_bais_list(Test_R, U, V, test_user[0],topk,user_bias)
-
+    
+        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_list(train_user[1], U, V, train_user[0],topk,user_bias)
+        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
+        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_list(test_user[1], U, V, test_user[0],topk,user_bias)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
+        
+        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
 
         toc = time.time()
         elapsed = toc - tic
@@ -226,9 +229,13 @@ def PMF(train_user, train_item, valid_user, test_user,R,max_iter=50,lambda_u=1, 
         print "\n PMF========better_rmse:{}   better_mae:{}==========\n".format(better_rmse,better_mae)
 
         if (count == endure_count):
-            break
+                break
         if better_rmse + 2 <te_eval:
             break
 
         PREV_LOSS = loss
 
+    with open("../user_init_vector", 'wb') as f:
+        pickle.dump(U, f)
+    with open("../item_init_vector", 'wb') as f:
+        pickle.dump(V, f)

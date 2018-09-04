@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 '''
-Created on Feb 5, 2018
+Created on Nay 29, 2018
 
 @author: ming
 '''
@@ -9,11 +7,11 @@ Created on Feb 5, 2018
 import os
 import time
 import logging
-from util import eval_RMSE_bias_list,adam
+from util import eval_RMSE_bais_list,adam
 import math
 import numpy as np
 
-def JMF_S(train_user, train_item, valid_user, test_user,
+def JMF_SU(train_user, train_item, valid_user, test_user,
            R, max_iter=50, lambda_u=1, lambda_v=100, dimension=50, lambda_p=0, lambda_q=50,momentum_flag=1):
     # explicit setting
     a = 1
@@ -48,24 +46,18 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     valid_size=0
     total_sum=0
 
-    user_bias_sum=[]
-    item_bias_sum=[]
-    user_bias_size=[]
-    item_bias_size=[]
+    user_bais_sum=[]
+    item_bais_sum=[]
+    user_bais_size=[]
+    item_bais_size=[]
 
-    user_bias_dict=[]
 
-    num_c=0
     for item in train_user[1]:
         train_sum=train_sum+ np.sum(item)
         train_size=train_size+np.size(item)
 
-        user_bias_sum.append(np.sum(item))
-        user_bias_size.append(len(item))
-        item =item.tolist()
-        i_index=[len(item)/4,len(item)/2,len(item)/4+len(item)/2]
-        u_bias_list=[min(item),item[len(item)/4],item[len(item)/2],item[(int)(len(item)*0.75)],max(item)]
-        user_bias_dict.append(u_bias_list)
+        user_bais_sum.append(np.sum(item))
+        user_bais_size.append(len(item))
 
 
     for item in test_user[1]:
@@ -76,26 +68,23 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         valid_size=valid_size+np.size(item)
     
     for item in train_item[1]:
-        item_bias_sum.append(np.sum(item))
-        item_bias_size.append(len(item))
+        item_bais_sum.append(np.sum(item))
+        item_bais_size.append(len(item))
 
 
     total_size=train_size+test_size+valid_size
     total_sum=train_sum+test_sum+valid_sum
     global_average=total_sum*1.0/total_size
 
-    user_bias=[user_bias_sum[i]/user_bias_size[i] for i in range(len(user_bias_sum))]
-    item_bias=[item_bias_sum[i]/item_bias_size[i] for i in range(len(item_bias_sum))]
-
-
+    user_bais=[user_bais_sum[i]/user_bais_size[i] for i in range(len(user_bais_sum))]
+    item_bais=[item_bais_sum[i]/item_bais_size[i] for i in range(len(item_bais_sum))]
 
     print "######################################"
     print "sum: ",train_sum,test_sum,valid_sum   
     print "size: ",train_size,test_size,valid_size
     print "average: ",train_sum*1.0/train_size, test_sum*1.0/test_size, valid_sum*1.0/valid_size
     print "global average: ",global_average
-    print "user_bias:",user_bias[0:10]
-    print "five point",user_bias_dict[0:10]
+    print "user_bais:",user_bais[0:10]
     print "######################################"
     
     '''
@@ -109,17 +98,9 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     uindx=0
     for item in train_user[1]:
         new_item=item.copy()
-        inf=user_bias[uindx]# user_bias_dict[uindx][1]
-        sup=user_bias[uindx]-0.1# user_bias_dict[uindx][4]
-        a= sup-inf+1
-
         for i in range(len(item)):
-            # if item[i] >user_bias[uindx] :      
-            if item[i] >sup:
-                new_item[i]=1.0     
-            elif item[i] >inf :
-                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
-                #1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[iidex]))
+            if item[i] >user_bais[uindx]:
+                new_item[i]=1.0/(1.0+(item[i]-user_bais[uindx])**(-2))#1.0/(1.0+math.exp(-item[i]+user_bais[iidex]))
             else:
                 new_item[i]=0
         S_Train_R_I.append(new_item)
@@ -130,16 +111,9 @@ def JMF_S(train_user, train_item, valid_user, test_user,
     for item in train_item[1]:
         new_item=item.copy()
         for i in range(len(item)):
-            temp_bias=train_item[0][uindx][i]
-            
-            inf= user_bias[uindx]#user_bias_dict[temp_bias][1]
-            sup= user_bias[uindx]-0.1#user_bias_dict[temp_bias][4]
-            a=sup-inf+1
-            if item[i] > sup:
-                new_item[i]=1.0
-            elif item[i] >inf: #user_bias_dict[temp_bias][0] :#user_bias[temp_bias] :
-                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
-                # new_item[i]= 1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[temp_bias]))
+            temp_bais=train_item[0][uindx][i]
+            if item[i] >user_bais[temp_bais]:
+                new_item[i]= 1.0/(1.0+(item[i]-user_bais[temp_bais])**(-2))#1.0/(1.0+math.exp(-item[i]+user_bais[temp_bais]))
             else:
                 new_item[i]=0
         S_Train_R_J.append(new_item)
@@ -179,6 +153,7 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         sub_loss = np.zeros(num_user)
         print "=================================================================="
         print "the shape of U, U[i] {} {}".format(U.shape,U[0].shape)
+        print "the shape of V, V[i] {} {}".format(V.shape,V[0].shape)
         print "=================================================================="
         # if momentum_flag==1 and  iteration <iteration_flag:
         #     print "momentum update",momentum_eta
@@ -231,6 +206,23 @@ def JMF_S(train_user, train_item, valid_user, test_user,
 
             U[i] =(np.linalg.solve(A.T, B.T)).T      #AX=B,X=A^(-1)B
             sub_loss[i] =sub_loss[i] -0.5 * lambda_u * np.dot(U[i], U[i])
+
+
+
+
+            '''update S
+            '''
+
+            Xg = (S_R_i - S_approx_R_i) 
+            S_R_i   =  S_R_i + eta*Xg
+
+            X = (1.0/S_R_i -1)**2
+            for i in range(len(X)):
+                if X[i]<=0:
+                    S_R_i[i] = 0
+
+
+
 
         P=U
 
@@ -311,13 +303,12 @@ def JMF_S(train_user, train_item, valid_user, test_user,
         loss = (loss + np.sum(sub_loss))
         seed = np.random.randint(100000)
         topk=[3,5,10,15,20,25,30,40,50,100]
-        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_list(train_user[1], U, V, train_user[0],topk,user_bias)
-        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
-        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_list(test_user[1], U, V, test_user[0],topk,user_bias)
+        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(train_user[1], U, V, train_user[0],topk,user_bais)
+        val_eval,va_recall,va_mae = eval_RMSE_bais_list(valid_user[1], U, V, valid_user[0],topk,user_bais)
+        te_eval,te_recall,te_mae = eval_RMSE_bais_list(test_user[1], U, V, test_user[0],topk,user_bais)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
-        
-        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
+
         toc = time.time()
         elapsed = toc - tic
         converge = abs((loss - PREV_LOSS) / PREV_LOSS)

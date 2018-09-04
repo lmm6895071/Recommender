@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on April 5, 2018
 
@@ -7,7 +9,7 @@ Created on April 5, 2018
 import os
 import time
 import logging
-from util import eval_RMSE_bais_list
+from util import eval_RMSE_bias_list
 import math
 import numpy as np
 
@@ -46,17 +48,26 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
     valid_size=0
     total_sum=0
 
-    user_bais_sum=[]
-    item_bais_sum=[]
-    user_bais_size=[]
-    item_bais_size=[]
+    user_bias_sum=[]
+    item_bias_sum=[]
+    user_bias_size=[]
+    item_bias_size=[]
 
+   
+    user_bias_dict=[]
+
+    num_c=0
     for item in train_user[1]:
         train_sum=train_sum+ np.sum(item)
         train_size=train_size+np.size(item)
 
-        user_bais_sum.append(np.sum(item))
-        user_bais_size.append(len(item))
+        user_bias_sum.append(np.sum(item))
+        user_bias_size.append(len(item))
+        item =item.tolist()
+        i_index=[len(item)/4,len(item)/2,len(item)/4+len(item)/2]
+        u_bias_list=[min(item),item[len(item)/4],item[len(item)/2],item[(int)(len(item)*0.75)],max(item)]
+        user_bias_dict.append(u_bias_list)
+
 
     for item in test_user[1]:
         test_sum=test_sum+ np.sum(item)
@@ -67,23 +78,23 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
         valid_size=valid_size+np.size(item)
 
     for item in train_item[1]:
-        item_bais_sum.append(np.sum(item))
-        item_bais_size.append(len(item))
+        item_bias_sum.append(np.sum(item))
+        item_bias_size.append(len(item))
 
 
     total_size=train_size+test_size+valid_size
     total_sum=train_sum+test_sum+valid_sum
     global_average=total_sum*1.0/total_size
 
-    user_bais=[user_bais_sum[i]/user_bais_size[i] for i in range(len(user_bais_sum))]
-    item_bais=[item_bais_sum[i]/item_bais_size[i] for i in range(len(item_bais_sum))]
+    user_bias=[user_bias_sum[i]/user_bias_size[i] for i in range(len(user_bias_sum))]
+    item_bias=[item_bias_sum[i]/item_bias_size[i] for i in range(len(item_bias_sum))]
     print "######################################"
     print "sum: ",train_sum,test_sum,valid_sum
     print "size: ",train_size,test_size,valid_size
     print "average: ",train_sum*1.0/train_size, test_sum*1.0/test_size, valid_sum*1.0/valid_size
     print "global average: ",global_average
-    print "user_bais:",  user_bais[0:50]
-    print "item_bais:",   item_bais[0:50]
+    print "user_bias:",  user_bias[0:50]
+    print "item_bias:",   item_bias[0:50]
     print "######################################"
     '''
     prefrence matrix
@@ -93,30 +104,46 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
     S_Test_R = []#test_user[1]
     S_Valid_R = []#valid_user[1]
 
-    iidex=0
+    uindx=0
     for item in train_user[1]:
         new_item=item.copy()
+        inf=user_bias_dict[uindx][0]
+        sup= user_bias_dict[uindx][4]
+        a= sup-inf+1
+
         for i in range(len(item)):
-            if item[i] >user_bais[iidex]:
-                new_item[i]=1.0/(1.0+(item[i]-user_bais[iidex])**(-2))#1.0/(1.0+math.exp(-item[i]+user_bais[iidex]))
+            # if item[i] >user_bias[uindx] :      
+            if item[i] >sup:
+                new_item[i]=1.0     
+            elif item[i] >inf :
+                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
+                #1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[iidex]))
             else:
                 new_item[i]=0
         S_Train_R_I.append(new_item)
-        iidex=iidex+1
+        uindx=uindx+1
     S_Train_R_I=np.array(S_Train_R_I)
 
-    iidex=0
+    uindx=0
     for item in train_item[1]:
         new_item=item.copy()
         for i in range(len(item)):
-            temp_bais=train_item[0][iidex][i]
-            if item[i] >user_bais[temp_bais]:
-                new_item[i]= 1.0/(1.0+(item[i]-user_bais[temp_bais])**(-2))#1.0/(1.0+math.exp(-item[i]+user_bais[temp_bais]))
+            temp_bias=train_item[0][uindx][i]
+            
+            inf= user_bias_dict[uindx][0]
+            sup= user_bias_dict[uindx][4]
+            a=sup-inf+1
+            if item[i] > sup:
+                new_item[i]=1.0
+            elif item[i] >inf: #user_bias_dict[temp_bias][0] :#user_bias[temp_bias] :
+                new_item[i]=(1.0+a *(sup-inf)**(-3))/(1+a*(item[i]-inf)**(-3))
+                # new_item[i]= 1.0/(1.0+(item[i]-inf)**(-3))#1.0/(1.0+math.exp(-item[i]+user_bias[temp_bias]))
             else:
                 new_item[i]=0
         S_Train_R_J.append(new_item)
-        iidex=iidex+1
+        uindx=uindx+1
     S_Train_R_J=np.array(S_Train_R_J)
+
  
     pre_val_eval = 1e10
 
@@ -259,12 +286,15 @@ def JONMF_P(train_user, train_item, valid_user, test_user,
         seed = np.random.randint(100000)
 
         topk=[3,5,10,15,20,25,30,40,50,100]
-        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(train_user[1], U, V, train_user[0],topk,user_bais)
-        val_eval,va_recall,va_mae = eval_RMSE_bais_list(valid_user[1], U, V, valid_user[0],topk,user_bais)
-        te_eval,te_recall,te_mae = eval_RMSE_bais_list(test_user[1], U, V, test_user[0],topk,user_bais)
-
+     
+        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_list(train_user[1], U, V, train_user[0],topk,user_bias)
+        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
+        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_list(test_user[1], U, V, test_user[0],topk,user_bias)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
+        
+        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
+
 
         toc = time.time()
         elapsed = toc - tic

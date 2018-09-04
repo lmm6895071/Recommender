@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on Sep 8, 2017
 
@@ -7,7 +9,7 @@ Created on Sep 8, 2017
 import os,sys
 import time
 import logging
-from util import eval_RMSE_bais_list,adam
+from util import eval_RMSE_bias_list,adam
 import math
 import numpy as np
 
@@ -174,13 +176,13 @@ def WNMF(train_user, train_item, valid_user, test_user,R,max_iter=50, dimension=
         topk=[3,5,10,15,20,25,30,40,50,100]
         # holdout=4
 
-        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(Train_R_I, U, V, train_user[0],topk,user_bias)
-        val_eval,va_recall,va_mae = eval_RMSE_bais_list(Valid_R, U, V, valid_user[0],topk,user_bias)
-        te_eval,te_recall,te_mae = eval_RMSE_bais_list(Test_R, U, V, test_user[0],topk,user_bias)
-
+        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_list(train_user[1], U, V, train_user[0],topk,user_bias)
+        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
+        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_list(test_user[1], U, V, test_user[0],topk,user_bias)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
-
+        
+        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
         toc = time.time()
         elapsed = toc - tic
         converge = abs((loss - PREV_LOSS) / PREV_LOSS)

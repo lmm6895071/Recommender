@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on Sep 8, 2017
 
@@ -24,9 +26,10 @@ import logging
 from util import adam,eval_RMSE_bias_alpha_beta
 import math
 import numpy as np
+import pickle
 
 def BiasMF(train_user, train_item, valid_user, test_user,
-           R, max_iter=50, lambda_u=1, lambda_v=100, dimension=50,momentum_flag=1): 
+           R, max_iter=50, lambda_u=1, lambda_v=100, dimension=50,momentum_flag=1):
     # explicit setting
     a = 1
     b = 0
@@ -96,7 +99,7 @@ def BiasMF(train_user, train_item, valid_user, test_user,
     print "user_bias:",user_bias[0:10]
     print "######################################"
 
-   
+
 
     pre_val_eval = 1e10
     V = np.random.uniform(0,1,size=(num_item,dimension))
@@ -110,6 +113,7 @@ def BiasMF(train_user, train_item, valid_user, test_user,
     count = 0
     better_rmse =100.0
     better_mae = 100.0
+    better_ndcg=0
 
     if momentum_flag== 0:
         '''
@@ -339,13 +343,14 @@ def BiasMF(train_user, train_item, valid_user, test_user,
             '''
             topk=[3,5,10,15,20,25,30,40,50,100]
 
-            tr_eval,tr_recall,tr_mae=eval_RMSE_bias_alpha_beta(Train_R_I, U, V, train_user[0],topk, Alpha,Beta, user_bias)
-            val_eval,va_recall,va_mae = eval_RMSE_bias_alpha_beta(Valid_R, U, V, valid_user[0],topk,Alpha,Beta, user_bias)
-            te_eval,te_recall,te_mae = eval_RMSE_bias_alpha_beta(Test_R, U, V, test_user[0],topk,Alpha,Beta, user_bias)
-
+            tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bias_alpha_beta(Train_R_I, U, V, train_user[0],topk, Alpha,Beta, user_bias)
+            val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bias_alpha_beta(Valid_R, U, V, valid_user[0],topk,Alpha,Beta, user_bias)
+            te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bias_alpha_beta(Test_R, U, V, test_user[0],topk,Alpha,Beta, user_bias)
 
             for i in range(len(topk)):
                 print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
+            print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
+
 
             toc = time.time()
             elapsed = toc - tic
@@ -369,6 +374,9 @@ def BiasMF(train_user, train_item, valid_user, test_user,
                 better_rmse=te_eval
             if te_mae < better_mae:
                 better_mae = te_mae
+            if te_ndcg[1] <better_ndcg:
+                better_ndcg=te_ndcg[1]
+
             print "\n BiasMF========better_rmse:{}   better_mae:{}==========\n".format(better_rmse,better_mae)
 
             if (count == endure_count):

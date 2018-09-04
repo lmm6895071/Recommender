@@ -90,7 +90,7 @@ else:
     if lambda_v is None:
         sys.exit("Argument missing - lambda_v is required")
 
-    print "===================================ConvMF Option Setting==================================="
+    print "===================================%s Option Setting==================================="%(methods)
     print "\t approach -%s"%methods
     print "\taux path - %s" % aux_path
     print "\tdata path - %s" % data_path
@@ -125,6 +125,11 @@ else:
         from models.JMF_S import JMF_S
         print "######### Test start lambda_u={},lambda_v={},lambda_p=-,lambda_q={}############".format(lambda_u,lambda_v,lambda_q)
         JMF_S(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user,
+            train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q,momentum_flag=momentum_flag)
+    elif methods == "JMF-SU":
+        from models.JMF_SU import JMF_SU
+        print "######### Test start lambda_u={},lambda_v={},lambda_p=-,lambda_q={}############".format(lambda_u,lambda_v,lambda_q)
+        JMF_SU(max_iter=max_iter, lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, train_user=train_user,
             train_item=train_item, valid_user=valid_user, test_user=test_user, R=R,lambda_p=lambda_p,lambda_q=lambda_q,momentum_flag=momentum_flag)
 
     elif methods == "JONMF-P":
