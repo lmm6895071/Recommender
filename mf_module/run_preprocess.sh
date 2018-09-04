@@ -6,7 +6,7 @@ then
 	-a ../data/movielens/preprocessed/movielens_1m/ \
 	-c True \
 	-r ../data/movielens/ml-1m_ratings.dat \
-	-m 1 \
+	-m 20 \
 	-t $3
 elif [ "$1" == "ml-10m" ]
 then
