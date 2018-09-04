@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on April 9, 2018
 
@@ -144,6 +146,7 @@ else:
     print "######### Test start lambda_u={},lambda_v={},lambda_p={},lambda_q={}############".format(lambda_u,lambda_v,lambda_p,lambda_q)
     if methods == "ConvMF":
         from models.ConvMF import ConvMF
+        print "start"
         ConvMF(max_iter=max_iter, res_dir=res_dir,
                lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, vocab_size=vocab_size, init_W=init_W,
                give_item_weight=give_item_weight, CNN_X=CNN_X, emb_dim=emb_dim, num_kernel_per_ws=num_kernel_per_ws,

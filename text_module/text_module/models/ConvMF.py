@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on April 10, 2018
 @author: ming
@@ -36,9 +38,9 @@ def ConvMF(res_dir, train_user, train_item, valid_user, test_user,
     valid_size=0
     total_sum=0
 
-    user_bais_sum=[]
+    user_bias_sum=[]
     item_bais_sum=[]
-    user_bais_size=[]
+    user_bias_size=[]
     item_bais_size=[]
 
 
@@ -46,8 +48,8 @@ def ConvMF(res_dir, train_user, train_item, valid_user, test_user,
         train_sum=train_sum+ np.sum(item)
         train_size=train_size+np.size(item)
 
-        user_bais_sum.append(np.sum(item))
-        user_bais_size.append(len(item))
+        user_bias_sum.append(np.sum(item))
+        user_bias_size.append(len(item))
 
 
     for item in test_user[1]:
@@ -66,7 +68,7 @@ def ConvMF(res_dir, train_user, train_item, valid_user, test_user,
     total_sum=train_sum+test_sum+valid_sum
     global_average=total_sum*1.0/total_size
 
-    user_bais=[user_bais_sum[i]/user_bais_size[i] for i in range(len(user_bais_sum))]
+    user_bias=[user_bias_sum[i]/user_bias_size[i] for i in range(len(user_bias_sum))]
     item_bais=[item_bais_sum[i]/item_bais_size[i] for i in range(len(item_bais_sum))]
 
 
@@ -97,6 +99,7 @@ def ConvMF(res_dir, train_user, train_item, valid_user, test_user,
     np.random.seed(133)
     U = np.random.uniform(0,1,size=(num_user, dimension))
     V = theta
+    print "------",type(V),
 
     endure_count = 5
     count = 0
@@ -152,13 +155,16 @@ def ConvMF(res_dir, train_user, train_item, valid_user, test_user,
 
 
         topk=[3,5,10,15,20,25,30,40,50,100]
-        tr_eval,tr_recall,tr_mae=eval_RMSE_bais_list(Train_R_I, U, V, train_user[0],topk,user_bais)
-        val_eval,va_recall,va_mae = eval_RMSE_bais_list(Valid_R, U, V, valid_user[0],topk,user_bais)
-        te_eval,te_recall,te_mae = eval_RMSE_bais_list(Test_R, U, V, test_user[0],topk,user_bais)
 
+        tr_eval,tr_recall,tr_mae,tr_ndcg=eval_RMSE_bais_list(train_user[1], U, V, train_user[0],topk,user_bias)
+        val_eval,va_recall,va_mae,val_ndcg = eval_RMSE_bais_list(valid_user[1], U, V, valid_user[0],topk,user_bias)
+        te_eval,te_recall,te_mae,te_ndcg = eval_RMSE_bais_list(test_user[1], U, V, test_user[0],topk,user_bias)
         for i in range(len(topk)):
             print "recall top-{}: Train:{} Validation:{}  Test:{}".format(topk[i],tr_recall[i],va_recall[i],te_recall[i])
+        
+        print "ndcg train {}, val {}, test {}".format(tr_ndcg,val_ndcg,te_ndcg)
 
+ 
         toc = time.time()
         elapsed = toc - tic
 

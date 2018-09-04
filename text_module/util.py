@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 '''
 Created on Sep 21, 2017
 
@@ -37,6 +39,8 @@ def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
     sub_mae = np.zeros(num_user)
 
     recall_result=np.zeros([len(k),num_user])
+    
+    ndcg=np.zeros([3,num_user])
 
     for i in xrange(num_user):
         idx_item = TS[i]
@@ -48,6 +52,11 @@ def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
         R_i = R[i]
         sub_rmse[i] = np.square(result - R_i).sum()
         sub_mae[i] = np.abs(result- R_i).sum()
+
+        ndcg[0][i]= ndcg_score(R_i,result,5)
+        ndcg[1][i]=ndcg_score(R_i,result,10)
+        ndcg[2][i]=ndcg_score(R_i,result,20)
+
         for it in range(len(k)):
             # recall_result[it][i]=sub_recall[i]
             # sub_recall[i]
@@ -60,7 +69,7 @@ def eval_RMSE_bais_list(R,U,V,TS,k=[50],user_bias=[]):
     m_recall=[]#sub_recall.sum()/num_user
     for item in range(len(k)):
         m_recall.append(recall_result[item].sum()/num_user)
-    return rmse,m_recall,mae
+    return rmse,m_recall,mae,ndcg.mean(1)
 
 def eval_RMSE(R, U, V, TS):
     num_user = U.shape[0]

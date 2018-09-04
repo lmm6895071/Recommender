@@ -7,7 +7,7 @@ then
 	-c True \
 	-r ../data/movielens/ml-1m_ratings.dat \
 	-i ../data/movielens/ml_plot.dat \
-	-m 1 \
+	-m 20 \
 	-t $3
 elif [ "$1" == "ml-10m" ]
 then
